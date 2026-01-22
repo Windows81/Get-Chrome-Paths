@@ -24,3 +24,5 @@ dependencies = [
 "Homepage" = "https://github.com/jifengwu2k/get-chrome-paths"
 "Bug Tracker" = "https://github.com/jifengwu2k/get-chrome-paths/issues"
 
+[project.scripts]
+get-chrome-paths = "get_chrome_paths:main"
