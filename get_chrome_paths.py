@@ -5,18 +5,6 @@ import platform
 import sys
 
 
-def get_unique_elements(iterable):
-    seen = set()
-    unique_elements = []
-
-    for element in iterable:
-        if element not in seen:
-            seen.add(element)
-            unique_elements.append(element)
-
-    return unique_elements
-
-
 def filter_existing_paths(paths):
     return [p for p in paths if os.path.isfile(p)]
 
@@ -79,7 +67,7 @@ def get_chrome_paths():
             '/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev',
         ]
 
-        chrome_paths.add(filter_existing_paths(common_paths))
+        chrome_paths.update(filter_existing_paths(common_paths))
 
     elif system == 'Linux':
         common_paths = [
@@ -94,9 +82,9 @@ def get_chrome_paths():
             '/usr/bin/microsoft-edge',
         ]
 
-        chrome_paths.add(filter_existing_paths(common_paths))
+        chrome_paths.update(filter_existing_paths(common_paths))
 
-    return get_unique_elements(chrome_paths)
+    return chrome_paths
 
 
 if __name__ == '__main__':
