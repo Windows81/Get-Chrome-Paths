@@ -13,7 +13,7 @@ def get_unique_elements(iterable):
         if element not in seen:
             seen.add(element)
             unique_elements.append(element)
-    
+
     return unique_elements
 
 
@@ -23,7 +23,7 @@ def filter_existing_paths(paths):
 
 def get_chrome_paths():
     system = platform.system()
-    chrome_paths = []
+    chrome_paths = set()
 
     if system == 'Windows':
         if sys.version_info < (3,):
@@ -31,27 +31,37 @@ def get_chrome_paths():
         else:
             import winreg
 
-        common_registry_paths = [
-            # Google Chrome
-            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe",
-            "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chrome.exe",
-            # Chromium
-            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chromium.exe",
-            "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths\\chromium.exe",
-            # Microsoft Edge
-            "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\App Paths\\msedge.exe",
-            "SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\App Paths\\msedge.exe",
-        ]
-
-        for path in common_registry_paths:
+        software_key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Software", 0, winreg.KEY_ENUMERATE_SUB_KEYS)
+        index = 0
+        while True:
             try:
-                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path)
-                browser_path = winreg.QueryValue(key, None)
-                winreg.CloseKey(key)
-                if browser_path is not None and os.path.isfile(browser_path):
-                    chrome_paths.append(browser_path)
-            except (IOError, OSError):
+                # Use EnumKey to get the subkey name by index
+                subkey_name = winreg.EnumKey(software_key, index)
+                index += 1
+            except OSError:
+                # EnumKey raises an OSError when all subkeys have been enumerated
+                break
+
+            try:
+                subkey = winreg.OpenKey(software_key, subkey_name)
+                value = winreg.QueryValueEx(subkey, "InstallerSuccessLaunchCmdLine")[0]
+                winreg.CloseKey(subkey)
+            except OSError:
+                # QueryValueEx raises an OSError if InstallerSuccessLaunchCmdLine is not a valid value
                 continue
+
+            try:
+                # Assuming that the value a string similar to:
+                # "C:\Users\USER\AppData\Local\Google\Chrome\Application\chrome.exe" --from-installer
+                browser_path = value.split('"', maxsplit=2)[1]
+                if not os.path.isfile(browser_path):
+                    continue
+                chrome_paths.add(browser_path)
+            except TypeError:
+                # Raise error if value is not a string
+                continue
+
+        winreg.CloseKey(software_key)
 
     elif system == 'Darwin':
         common_paths = [
@@ -69,7 +79,7 @@ def get_chrome_paths():
             '/Applications/Microsoft Edge Dev.app/Contents/MacOS/Microsoft Edge Dev',
         ]
 
-        chrome_paths.extend(filter_existing_paths(common_paths))
+        chrome_paths.add(filter_existing_paths(common_paths))
 
     elif system == 'Linux':
         common_paths = [
@@ -84,7 +94,7 @@ def get_chrome_paths():
             '/usr/bin/microsoft-edge',
         ]
 
-        chrome_paths.extend(filter_existing_paths(common_paths))
+        chrome_paths.add(filter_existing_paths(common_paths))
 
     return get_unique_elements(chrome_paths)
 
