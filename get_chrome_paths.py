@@ -89,6 +89,10 @@ def get_chrome_paths():
     return get_unique_elements(chrome_paths)
 
 
-if __name__ == '__main__':
+def main():
     for chrome_path in get_chrome_paths():
         print(chrome_path)
+
+
+if __name__ == '__main__':
+    main()
