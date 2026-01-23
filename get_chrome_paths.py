@@ -87,6 +87,10 @@ def get_chrome_paths():
     return chrome_paths
 
 
-if __name__ == '__main__':
+def main():
     for chrome_path in get_chrome_paths():
         print(chrome_path)
+
+
+if __name__ == '__main__':
+    main()
